@@ -11,11 +11,7 @@ const [editData, setEditData] = useState({})
 const [loading, setLoading] = useState(true)
 const [isLogin, setIsLogin] = useState(false)
 const [isAdmin, setIsAdmin] = useState(false)
-const [token, setToken] = useState(null)
- useEffect(() => {
-    const localToken = localStorage.getItem("token")
-    setToken(localToken)
-  }, [])
+const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
 
  useEffect(() => {
     // Simulate fetching user data

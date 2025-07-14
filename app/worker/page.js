@@ -11,11 +11,8 @@ export default function FieldWorkerPanel() {
   const [showModal, setShowModal] = useState(false)
   const router = useRouter()
   const [user, setUser] = useState(null)
-  const [token, setToken] = useState(null)
-  useEffect(() => {
-    const localToken = localStorage.getItem("token")
-    setToken(localToken)
-  }, [])
+  const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+
 
   // Fetch user data
   useEffect(() => {

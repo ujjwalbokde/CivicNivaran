@@ -76,7 +76,7 @@ export default function AdminDashboard() {
     const fetchStats = async () => {
       try {
         const response = await fetch(
-            "http://localhost:5000/api/complaints/stats"
+            "https://civicnivaran.onrender.com/api/complaints/stats"
           );
         if (!response.ok) throw new Error("Failed to fetch stats");
         const data = await response.json();
@@ -692,7 +692,7 @@ export default function AdminDashboard() {
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                         {viewComplaint.images.map((img, i) => {
                           const normalizedPath = img.replace(/\\/g, "/");
-                          const fullURL = `http://localhost:5000/${normalizedPath}`;
+                          const fullURL = `https://civicnivaran.onrender.com/${normalizedPath}`;
                           return (
                             <div key={i} className="group relative">
                               <img
