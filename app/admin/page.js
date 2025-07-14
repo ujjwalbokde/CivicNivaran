@@ -1,218 +1,183 @@
-  "use client";
-  import { useState, useEffect } from "react";
-  import Link from "next/link";
-  import ProtectedRoute from "@/components/ProtectedRoute";
-  import toast from 'react-hot-toast';
-  import {
-    BarChart3,
-    Users,
-    FileText,
-    Search,
-    Eye,
-    Edit,
-    CheckCircle,
-    Clock,
-    AlertTriangle,
-    MapPin,
-    Calendar,
-    UserPlus,
-  } from "lucide-react";
-  import Navbar from "@/components/Navbar";
 
-  export default function AdminDashboard() {
-    const [activeTab, setActiveTab] = useState("dashboard");
-    const [filterStatus, setFilterStatus] = useState("all");
-    const [filterDepartment, setFilterDepartment] = useState("all");
-    const [stats, setStats] = useState();
-    const [selectedComplaint, setSelectedComplaint] = useState(null);
-    const [workerEmail, setWorkerEmail] = useState("");
-    const [showModal, setShowModal] = useState(false);
-    const [selectedWorkerId, setSelectedWorkerId] = useState("");
-    const [selectedWorkerName, setSelectedWorkerName] = useState("");
 
-    const handleAssignClick = (complaint) => {
-      setSelectedComplaint(complaint);
-      setWorkerEmail(""); // clear input
-      setShowModal(true);
-    };
+"use client";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import toast from 'react-hot-toast';
+import {
+  BarChart3,
+  Users,
+  FileText,
+  Search,
+  Eye,
+  Edit,
+  CheckCircle,
+  Clock,
+  AlertTriangle,
+  MapPin,
+  Calendar,
+  UserPlus,
+} from "lucide-react";
+import Navbar from "@/components/Navbar";
 
-    const handleAssignWorker = async () => {
-      if (!selectedWorkerId || !selectedComplaint) return;
+export default function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState("dashboard");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterDepartment, setFilterDepartment] = useState("all");
+  const [stats, setStats] = useState();
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [workerEmail, setWorkerEmail] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [selectedWorkerId, setSelectedWorkerId] = useState("");
+  const [selectedWorkerName, setSelectedWorkerName] = useState("");
 
-      try {
-        const res = await fetch(
-          `https://civicnivaran.onrender.com/api/complaints/assign/${selectedComplaint._id}`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
+  const handleAssignClick = (complaint) => {
+    setSelectedComplaint(complaint);
+    setWorkerEmail("");
+    setShowModal(true);
+  };
+
+  const handleAssignWorker = async () => {
+    if (!selectedWorkerId || !selectedComplaint) return;
+
+    try {
+      const res = await fetch(
+        `https://civicnivaran.onrender.com/api/complaints/assign/${selectedComplaint._id}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            assignedTo: {
+              workerId: selectedWorkerId,
+              name: selectedWorkerName,
             },
-            body: JSON.stringify({
-              assignedTo: {
-                workerId: selectedWorkerId,
-                name: selectedWorkerName,
-              },
-            }),
-          }
-        );
-
-        if (res.ok) {
-          // Optional: update UI or refetch complaints
-          console.log("Worker assigned successfully!");
-          toast.success("Worker assigned successfully!");
-          setShowModal(false);
-        } else {
-          console.error("Failed to assign worker");
-          toast.error("Failed to assign worker.");
+          }),
         }
+      );
+
+      if (res.ok) {
+        toast.success("Worker assigned successfully!");
+        setShowModal(false);
+      } else {
+        console.error("Failed to assign worker");
+        toast.error("Failed to assign worker.");
+      }
+    } catch (error) {
+      console.error("Error assigning worker:", error);
+    }
+  };
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const response = await fetch("https://civicnivaran.onrender.com/api/complaints/stats");
+        if (!response.ok) throw new Error("Failed to fetch stats");
+        const data = await response.json();
+        setStats(data);
       } catch (error) {
-        console.error("Error assigning worker:", error);
+        console.error("Error fetching stats:", error);
       }
     };
+    fetchStats();
+  }, []);
 
-    //http://localhost:5000/api/complaints/stats
-    useEffect(() => {
-      // Fetch stats from API
-      const fetchStats = async () => {
-        try {
-          const response = await fetch(
-              "https://civicnivaran.onrender.com/api/complaints/stats"
-            );
-          if (!response.ok) throw new Error("Failed to fetch stats");
-          const data = await response.json();
-          setStats(data);
-        } catch (error) {
-          console.error("Error fetching stats:", error);
-        }
-      };
-      fetchStats();
-    }, []);
-
-    const [workers, setWorkers] = useState([]);
-    //http://localhost:5000/api/auth/workers
-    useEffect(() => {
-      // Fetch workers from API
-      const fetchWorkers = async () => {
-        try {
-          const response = await fetch("https://civicnivaran.onrender.com/api/auth/workers");
-          if (!response.ok) return;
-          const data = await response.json();
-          setWorkers(data);
-        } catch (error) {
-          console.error("Error fetching workers:", error);
-        }
-      };
-      fetchWorkers();
-    }, []);
-
-    const [complaints, setComplaints] = useState([]);
-    //http://localhost:5000/api/complaints/all
-    useEffect(() => {
-      // Fetch complaints from API
-      const fetchComplaints = async () => {
-        try {
-          const response = await fetch(
-            "https://civicnivaran.onrender.com/api/complaints/all"
-          );
-          if (!response.ok) throw new Error("Failed to fetch complaints");
-          const data = await response.json();
-          setComplaints(data);
-        } catch (error) {
-          console.error("Error fetching complaints:", error);
-        }
-      };
-      fetchComplaints();
-    }, []);
-
-    const getStatusColor = (status) => {
-      switch (status) {
-        case "Pending":
-          return "bg-yellow-100 text-yellow-800";
-        case "In Progress":
-          return "bg-blue-100 text-blue-800";
-        case "Resolved":
-          return "bg-green-100 text-green-800";
-        default:
-          return "bg-gray-100 text-gray-800";
+  const [workers, setWorkers] = useState([]);
+  useEffect(() => {
+    const fetchWorkers = async () => {
+      try {
+        const response = await fetch("https://civicnivaran.onrender.com/api/auth/workers");
+        if (!response.ok) return;
+        const data = await response.json();
+        setWorkers(data);
+      } catch (error) {
+        console.error("Error fetching workers:", error);
       }
     };
+    fetchWorkers();
+  }, []);
 
-    const getUrgencyColor = (urgency) => {
-      switch (urgency) {
-        case "high":
-          return "bg-red-100 text-red-800";
-        case "medium":
-          return "bg-yellow-100 text-yellow-800";
-        case "low":
-          return "bg-green-100 text-green-800";
-        default:
-          return "bg-gray-100 text-gray-800";
+  const [complaints, setComplaints] = useState([]);
+  useEffect(() => {
+    const fetchComplaints = async () => {
+      try {
+        const response = await fetch("https://civicnivaran.onrender.com/api/complaints/all");
+        if (!response.ok) throw new Error("Failed to fetch complaints");
+        const data = await response.json();
+        setComplaints(data);
+      } catch (error) {
+        console.error("Error fetching complaints:", error);
       }
     };
+    fetchComplaints();
+  }, []);
 
-    const filteredComplaints = complaints.filter((complaint) => {
-      const statusMatch =
-        filterStatus === "all" || complaint.status === filterStatus;
-      const deptMatch =
-        filterDepartment === "all" || complaint.department === filterDepartment;
-      return statusMatch && deptMatch;
-    });
-    const [viewComplaint, setViewComplaint] = useState(null);
-    const handleViewClick = (complaint) => {
-      setViewComplaint(complaint);
-      console.log(complaint);
-    };
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Pending":
+        return "bg-yellow-100 text-yellow-800";
+      case "In Progress":
+        return "bg-blue-100 text-blue-800";
+      case "Resolved":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
 
-    return (
-      <ProtectedRoute allowedRoles={["officer"]}>
-        <div className="min-h-screen bg-gray-50">
-          {/* Navigation */}
-          <Navbar />
+  const getUrgencyColor = (urgency) => {
+    switch (urgency) {
+      case "high":
+        return "bg-red-100 text-red-800";
+      case "medium":
+        return "bg-yellow-100 text-yellow-800";
+      case "low":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
 
-        <div className="flex">
-          {/* Sidebar */}
-          <div className="w-64 bg-white shadow-lg min-h-screen">
+  const filteredComplaints = complaints.filter((complaint) => {
+    const statusMatch = filterStatus === "all" || complaint.status === filterStatus;
+    const deptMatch = filterDepartment === "all" || complaint.department === filterDepartment;
+    return statusMatch && deptMatch;
+  });
+
+  const [viewComplaint, setViewComplaint] = useState(null);
+  const handleViewClick = (complaint) => {
+    setViewComplaint(complaint);
+  };
+
+  return (
+    <ProtectedRoute allowedRoles={["officer"]}>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+        <div className="flex flex-col md:flex-row">
+          <div className="w-full md:w-64 bg-white shadow-lg">
             <div className="p-4">
               <nav className="space-y-2">
-                <button
-                  onClick={() => setActiveTab("dashboard")}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
-                    activeTab === "dashboard"
-                      ? "bg-blue-100 text-blue-700"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  <BarChart3 className="w-5 h-5" />
-                  Dashboard
-                </button>
-                <button
-                  onClick={() => setActiveTab("complaints")}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
-                    activeTab === "complaints"
-                      ? "bg-blue-100 text-blue-700"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  <FileText className="w-5 h-5" />
-                  Complaints
-                </button>
-                <button
-                  onClick={() => setActiveTab("workers")}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
-                    activeTab === "workers"
-                      ? "bg-blue-100 text-blue-700"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  <Users className="w-5 h-5" />
-                  Workers
-                </button>
+                {['dashboard', 'complaints', 'workers'].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-colors ${
+                      activeTab === tab ? 'bg-blue-100 text-blue-700' : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    {tab === 'dashboard' ? <BarChart3 className="w-5 h-5" /> : tab === 'complaints' ? <FileText className="w-5 h-5" /> : <Users className="w-5 h-5" />}
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </button>
+                ))}
               </nav>
             </div>
           </div>
 
-          {/* Main Content */}
-          <div className="flex-1 p-8">
+          <div className="flex-1 p-4 md:p-8 overflow-auto">
+            {/* MAIN CONTENT FROM EXISTING CODE GOES HERE */}
+            <div className="flex-1 p-8">
             {/* Dashboard Tab */}
             {activeTab === "dashboard" && (
               <div>
@@ -731,8 +696,9 @@
               </div>
             )}
           </div>
+          </div>
         </div>
       </div>
-      </ProtectedRoute>
-    );
-  }
+    </ProtectedRoute>
+  );
+}
