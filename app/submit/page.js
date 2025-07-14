@@ -1,52 +1,167 @@
 "use client"
 import { useState } from "react"
 import Link from "next/link"
-import { Upload, X, MapPin, Phone, Mail, User, FileText, Shield, CheckCircle, AlertCircle, Camera, Clock, ArrowLeft } from 'lucide-react'
+import {
+  Upload,
+  X,
+  User,
+  FileText,
+  Shield,
+  CheckCircle,
+  Clock,
+  ArrowLeft,
+  ArrowRight,
+  AlertCircle,
+  ImageIcon,
+} from "lucide-react"
+import Navbar from "@/components/Navbar"
 
 export default function SubmitComplaint() {
-  const [formData, setFormData] = useState({
+  const [formData,  setFormData] = useState({
     fullName: "",
     email: "",
     phone: "",
+    address: "",
     department: "",
-    location: "",
+    category: "",
     title: "",
     description: "",
-    files: [],
-    priority: "medium",
+    urgency: "normal",
+    images: [],
   })
   const [showModal, setShowModal] = useState(false)
   const [complaintId, setComplaintId] = useState("")
   const [currentStep, setCurrentStep] = useState(1)
   const [dragActive, setDragActive] = useState(false)
+  const [errors, setErrors] = useState({})
 
   const departments = [
-    { value: "water", label: "Water Supply", icon: "💧" },
-    { value: "electricity", label: "Electricity", icon: "⚡" },
-    { value: "sanitation", label: "Sanitation", icon: "🗑️" },
-    { value: "roads", label: "Roads & Transport", icon: "🛣️" },
-    { value: "health", label: "Public Health", icon: "🏥" },
-    { value: "others", label: "Others", icon: "📋" }
+    {
+      value: "water",
+      label: "Water Supply",
+      icon: "💧",
+      categories: ["Water shortage", "Pipe leakage", "Water quality", "Billing issues"],
+    },
+    {
+      value: "electricity",
+      label: "Electricity",
+      icon: "⚡",
+      categories: ["Power outage", "Street lights", "Meter issues", "Electrical hazards"],
+    },
+    {
+      value: "sanitation",
+      label: "Sanitation",
+      icon: "🗑️",
+      categories: ["Garbage collection", "Drain blockage", "Public toilets", "Waste management"],
+    },
+    {
+      value: "roads",
+      label: "Roads & Transport",
+      icon: "🛣️",
+      categories: ["Potholes", "Traffic signals", "Road maintenance", "Parking issues"],
+    },
+    {
+      value: "health",
+      label: "Public Health",
+      icon: "🏥",
+      categories: ["Hospital services", "Vaccination", "Disease outbreak", "Medical facilities"],
+    },
+    {
+      value: "others",
+      label: "Others",
+      icon: "📋",
+      categories: ["Noise pollution", "Building permits", "Public safety", "General issues"],
+    },
   ]
 
-  const priorities = [
-    { value: "low", label: "Low", color: "green", description: "Non-urgent issues" },
-    { value: "medium", label: "Medium", color: "yellow", description: "Standard priority" },
-    { value: "high", label: "High", color: "red", description: "Urgent attention needed" }
+  const urgencyLevels = [
+    {
+      value: "low",
+      label: "Low",
+      color: "green",
+      description: "Can wait a few days",
+      bgColor: "bg-green-50",
+      borderColor: "border-green-200",
+      textColor: "text-green-700",
+    },
+    {
+      value: "normal",
+      label: "Normal",
+      color: "blue",
+      description: "Standard response time",
+      bgColor: "bg-blue-50",
+      borderColor: "border-blue-200",
+      textColor: "text-blue-700",
+    },
+    {
+      value: "high",
+      label: "High",
+      color: "orange",
+      description: "Needs quick attention",
+      bgColor: "bg-orange-50",
+      borderColor: "border-orange-200",
+      textColor: "text-orange-700",
+    },
+    {
+      value: "urgent",
+      label: "Urgent",
+      color: "red",
+      description: "Emergency situation",
+      bgColor: "bg-red-50",
+      borderColor: "border-red-200",
+      textColor: "text-red-700",
+    },
   ]
 
   const handleInputChange = (e) => {
+    const { name, value } = e.target
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     })
+
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: "",
+      })
+    }
+
+    // Reset category when department changes
+    if (name === "department") {
+      setFormData((prev) => ({
+        ...prev,
+        department: value,
+        category: "",
+      }))
+    }
   }
 
-  const handleFileUpload = (e) => {
+  const handleImageUpload = (e) => {
     const files = Array.from(e.target.files)
+    const imageFiles = files.filter((file) => file.type.startsWith("image/"))
+
+    if (imageFiles.length !== files.length) {
+      alert("Only image files are allowed!")
+      return
+    }
+
+    if (formData.images.length + imageFiles.length > 5) {
+      alert("Maximum 5 images allowed!")
+      return
+    }
+
+    // Check file sizes (max 5MB each)
+    const oversizedFiles = imageFiles.filter((file) => file.size > 5 * 1024 * 1024)
+    if (oversizedFiles.length > 0) {
+      alert("Each image must be less than 5MB!")
+      return
+    }
+
     setFormData({
       ...formData,
-      files: [...formData.files, ...files],
+      images: [...formData.images, ...imageFiles],
     })
   }
 
@@ -64,92 +179,207 @@ export default function SubmitComplaint() {
     e.preventDefault()
     e.stopPropagation()
     setDragActive(false)
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const files = Array.from(e.dataTransfer.files)
+      const imageFiles = files.filter((file) => file.type.startsWith("image/"))
+
+      if (imageFiles.length !== files.length) {
+        alert("Only image files are allowed!")
+        return
+      }
+
+      if (formData.images.length + imageFiles.length > 5) {
+        alert("Maximum 5 images allowed!")
+        return
+      }
+
+      const oversizedFiles = imageFiles.filter((file) => file.size > 5 * 1024 * 1024)
+      if (oversizedFiles.length > 0) {
+        alert("Each image must be less than 5MB!")
+        return
+      }
+
       setFormData({
         ...formData,
-        files: [...formData.files, ...files],
+        images: [...formData.images, ...imageFiles],
       })
     }
   }
 
-  const removeFile = (index) => {
-    const newFiles = formData.files.filter((_, i) => i !== index)
+  const removeImage = (index) => {
+    const newImages = formData.images.filter((_, i) => i !== index)
     setFormData({
       ...formData,
-      files: newFiles,
+      images: newImages,
     })
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // Generate random complaint ID
-    const id = "CN" + Math.random().toString(36).substr(2, 9).toUpperCase()
-    setComplaintId(id)
-    setShowModal(true)
-    // Reset form
-    setFormData({
-      fullName: "",
-      email: "",
-      phone: "",
-      department: "",
-      location: "",
-      title: "",
-      description: "",
-      files: [],
-      priority: "medium",
-    })
-    setCurrentStep(1)
+  const validateStep1 = () => {
+    const newErrors = {}
+
+    if (!formData.fullName.trim()) newErrors.fullName = "Full name is required"
+    if (!formData.email.trim()) newErrors.email = "Email is required"
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = "Email is invalid"
+    if (!formData.phone.trim()) newErrors.phone = "Phone number is required"
+    if (!formData.address.trim()) newErrors.address = "Address is required"
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
+  const validateStep2 = () => {
+    const newErrors = {}
+
+    if (!formData.department) newErrors.department = "Please select a department"
+    if (!formData.category) newErrors.category = "Please select a category"
+    if (!formData.title.trim()) newErrors.title = "Complaint title is required"
+    if (!formData.description.trim()) newErrors.description = "Description is required"
+    else if (formData.description.trim().length < 20)
+      newErrors.description = "Description must be at least 20 characters"
+
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
 
   const nextStep = () => {
-    if (currentStep < 3) setCurrentStep(currentStep + 1)
-  }
-
-  const prevStep = () => {
-    if (currentStep > 1) setCurrentStep(currentStep - 1)
-  }
-
-  const isStepValid = (step) => {
-    switch (step) {
-      case 1:
-        return formData.fullName && formData.email && formData.phone
-      case 2:
-        return formData.department && formData.title && formData.description
-      case 3:
-        return true
-      default:
-        return false
+    if (currentStep === 1 && validateStep1()) {
+      setCurrentStep(2)
     }
   }
 
+  const prevStep = () => {
+    if (currentStep === 2) {
+      setCurrentStep(1)
+    }
+  }
+
+
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  if (currentStep === 2 && validateStep2()) {
+    const id = "CN" + Math.random().toString(36).substr(2, 9).toUpperCase();
+    const formDataToSend = new FormData();
+    // Append complaintId
+    formDataToSend.append("complaintId", id);
+
+    // Append text fields
+    Object.entries(formData).forEach(([key, value]) => {
+      if (key === "images") return; // handle below
+      formDataToSend.append(key, value);
+    });
+
+    // Append images
+    formData.images.forEach((image) => {
+      formDataToSend.append("images", image);
+    });
+
+    try {
+      const response = await fetch("https://civicnivaran.onrender.com/api/complaints/submit", {
+        method: "POST",
+        body: formDataToSend,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to submit complaint.");
+      }
+
+      const data = await response.json();
+      
+      setComplaintId(id);
+      setShowModal(true);
+
+      // Reset form
+      setFormData({
+        complaintId: id,
+        fullName: "",
+        email: "",
+        phone: "",
+        address: "",
+        department: "",
+        category: "",
+        title: "",
+        description: "",
+        urgency: "normal",
+        images: [],
+      });
+      setErrors({});
+      setCurrentStep(1);
+
+    } catch (error) {
+      console.error("Submission error:", error);
+      alert("Something went wrong while submitting your complaint.");
+    }
+  }
+};
+// const handleSubmit = async (e) => {
+//   e.preventDefault();
+
+//   if (currentStep === 2 && validateStep2()) {
+//     const id = "CN" + Math.random().toString(36).substr(2, 9).toUpperCase(); // 1. Generate ID
+
+//     const formDataToSend = new FormData();
+
+//     // 2. Append complaintId
+//     formDataToSend.append("complaintId", id);
+
+//     // 3. Append other text fields
+//     Object.entries(formData).forEach(([key, value]) => {
+//       if (key === "images") return; // handle images separately
+//       formDataToSend.append(key, value);
+//     });
+
+//     // 4. Append images
+//     formData.images.forEach((image) => {
+//       formDataToSend.append("images", image);
+//     });
+
+//     try {
+//       const response = await fetch("http://localhost:5000/api/complaints/submit", {
+//         method: "POST",
+//         body: formDataToSend,
+//       });
+
+//       if (!response.ok) {
+//         throw new Error("Failed to submit complaint.");
+//       }
+
+//       const data = await response.json();
+
+//       setComplaintId(id);           // update local state
+//       setShowModal(true);           // show confirmation modal
+
+//       // Reset form with new ID stored
+//       setFormData({
+//         complaintId: id,
+//         fullName: "",
+//         email: "",
+//         phone: "",
+//         address: "",
+//         department: "",
+//         category: "",
+//         title: "",
+//         description: "",
+//         urgency: "normal",
+//         images: [],
+//       });
+//       setErrors({});
+//       setCurrentStep(1);
+
+//     } catch (error) {
+//       console.error("Submission error:", error);
+//       alert("Something went wrong while submitting your complaint.");
+//     }
+//   }
+// };
+
+
+  const selectedDepartment = departments.find((d) => d.value === formData.department)
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       {/* Navigation */}
-      <nav className="bg-white shadow-lg sticky top-0 z-40 border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
-                <Shield className="w-6 h-6 text-white" />
-              </div>
-              <Link href="/" className="text-2xl font-bold text-blue-600">
-                CivicNivaran
-              </Link>
-            </div>
-            <div className="flex items-center space-x-6">
-              <Link href="/" className="text-gray-700 hover:text-blue-600 transition-colors flex items-center">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Home
-              </Link>
-              <Link href="/track" className="text-gray-700 hover:text-blue-600 transition-colors">
-                Track Complaint
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar/> 
 
       <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
         {/* Header */}
@@ -160,127 +390,128 @@ export default function SubmitComplaint() {
           </div>
           <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Report a Public Service Issue</h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Help us improve your community by reporting issues with public services. We'll track and resolve your complaint transparently.
+            Help us improve your community by reporting issues with public services. Complete the form in just 2 simple
+            steps.
           </p>
         </div>
 
         {/* Progress Steps */}
         <div className="mb-8">
           <div className="flex items-center justify-center">
-            {[1, 2, 3].map((step) => (
+            {[1, 2].map((step) => (
               <div key={step} className="flex items-center">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
-                    currentStep >= step
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 text-gray-600"
+                  className={`w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
+                    currentStep >= step ? "bg-blue-600 text-white" : "bg-gray-200 text-gray-600"
                   }`}
                 >
-                  {currentStep > step ? <CheckCircle className="w-5 h-5" /> : step}
+                  {currentStep > step ? <CheckCircle className="w-6 h-6" /> : step}
                 </div>
-                {step < 3 && (
-                  <div className={`w-16 h-1 mx-2 transition-all ${
-                    currentStep > step ? "bg-blue-600" : "bg-gray-200"
-                  }`}></div>
+                {step < 2 && (
+                  <div
+                    className={`w-24 h-1 mx-4 transition-all ${currentStep > step ? "bg-blue-600" : "bg-gray-200"}`}
+                  ></div>
                 )}
               </div>
             ))}
           </div>
-          <div className="flex justify-center mt-4 space-x-8 text-sm">
+          <div className="flex justify-center mt-4 space-x-32 text-sm">
             <span className={currentStep >= 1 ? "text-blue-600 font-medium" : "text-gray-500"}>
-              Personal Info
+              Personal Information
             </span>
             <span className={currentStep >= 2 ? "text-blue-600 font-medium" : "text-gray-500"}>
-              Complaint Details
-            </span>
-            <span className={currentStep >= 3 ? "text-blue-600 font-medium" : "text-gray-500"}>
-              Evidence & Submit
+              Complaint Details & Evidence
             </span>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-xl p-8 border">
-          <form onSubmit={handleSubmit} className="space-y-8">
+        <div className="bg-white rounded-2xl shadow-xl border overflow-hidden">
+          <form onSubmit={handleSubmit}>
             {/* Step 1: Personal Information */}
             {currentStep === 1 && (
-              <div className="space-y-6">
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl font-semibold text-gray-900 mb-2">Personal Information</h2>
-                  <p className="text-gray-600">We need your contact details to keep you updated on the progress</p>
+              <div className="p-8">
+                <div className="flex items-center mb-8">
+                  <div className="bg-blue-100 p-4 rounded-full mr-4">
+                    <User className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-bold text-gray-900">Personal Information</h2>
+                    <p className="text-gray-600 text-lg">
+                      We need your contact details to keep you updated on the progress
+                    </p>
+                  </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid md:grid-cols-2 gap-8">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      <User className="w-4 h-4 inline mr-2" />
-                      Full Name *
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">Full Name *</label>
                     <input
                       type="text"
                       name="fullName"
                       value={formData.fullName}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-lg ${
+                        errors.fullName ? "border-red-300 bg-red-50" : "border-gray-300"
+                      }`}
                       placeholder="Enter your full name"
-                      required
                     />
+                    {errors.fullName && <p className="mt-2 text-sm text-red-600">{errors.fullName}</p>}
                   </div>
+
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      <Mail className="w-4 h-4 inline mr-2" />
-                      Email Address *
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">Email Address *</label>
                     <input
                       type="email"
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="Enter your email"
-                      required
+                      className={`w-full px-4 py-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-lg ${
+                        errors.email ? "border-red-300 bg-red-50" : "border-gray-300"
+                      }`}
+                      placeholder="Enter your email address"
                     />
+                    {errors.email && <p className="mt-2 text-sm text-red-600">{errors.email}</p>}
                   </div>
-                </div>
 
-                <div className="grid md:grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      <Phone className="w-4 h-4 inline mr-2" />
-                      Phone Number *
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">Phone Number *</label>
                     <input
                       type="tel"
                       name="phone"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-lg ${
+                        errors.phone ? "border-red-300 bg-red-50" : "border-gray-300"
+                      }`}
                       placeholder="Enter your phone number"
-                      required
                     />
+                    {errors.phone && <p className="mt-2 text-sm text-red-600">{errors.phone}</p>}
                   </div>
+
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      <MapPin className="w-4 h-4 inline mr-2" />
-                      Location/Address
-                    </label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-3">Complete Address *</label>
                     <input
                       type="text"
-                      name="location"
-                      value={formData.location}
+                      name="address"
+                      value={formData.address}
                       onChange={handleInputChange}
-                      className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      placeholder="Enter location or address"
+                      className={`w-full px-4 py-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-lg ${
+                        errors.address ? "border-red-300 bg-red-50" : "border-gray-300"
+                      }`}
+                      placeholder="Enter your complete address"
                     />
+                    {errors.address && <p className="mt-2 text-sm text-red-600">{errors.address}</p>}
                   </div>
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <div className="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
                   <div className="flex items-start">
-                    <Shield className="w-5 h-5 text-blue-600 mt-0.5 mr-3" />
+                    <Shield className="w-6 h-6 text-blue-600 mt-1 mr-4" />
                     <div>
-                      <h4 className="font-medium text-blue-900">Privacy Protection</h4>
-                      <p className="text-sm text-blue-700 mt-1">
-                        Your personal information is encrypted and will only be used to process your complaint and provide updates.
+                      <h4 className="font-semibold text-blue-900 text-lg">Privacy Protection</h4>
+                      <p className="text-blue-700 mt-2">
+                        Your personal information is encrypted and will only be used to process your complaint and
+                        provide updates. We never share your data with third parties.
                       </p>
                     </div>
                   </div>
@@ -288,17 +519,23 @@ export default function SubmitComplaint() {
               </div>
             )}
 
-            {/* Step 2: Complaint Details */}
+            {/* Step 2: Complaint Details & Evidence */}
             {currentStep === 2 && (
-              <div className="space-y-6">
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl font-semibold text-gray-900 mb-2">Complaint Details</h2>
-                  <p className="text-gray-600">Provide detailed information about the issue you're reporting</p>
+              <div className="p-8 space-y-8">
+                <div className="flex items-center mb-8">
+                  <div className="bg-green-100 p-4 rounded-full mr-4">
+                    <FileText className="w-8 h-8 text-green-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-bold text-gray-900">Complaint Details & Evidence</h2>
+                    <p className="text-gray-600 text-lg">Provide specific information about the issue</p>
+                  </div>
                 </div>
 
+                {/* Department Selection */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-3">Department *</label>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  <label className="block text-sm font-semibold text-gray-700 mb-4">Select Department *</label>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     {departments.map((dept) => (
                       <label key={dept.value} className="cursor-pointer">
                         <input
@@ -310,100 +547,124 @@ export default function SubmitComplaint() {
                           className="sr-only"
                         />
                         <div
-                          className={`p-4 rounded-xl border-2 text-center transition-all ${
+                          className={`p-6 rounded-xl border-2 text-center transition-all ${
                             formData.department === dept.value
                               ? "border-blue-500 bg-blue-50 text-blue-700"
-                              : "border-gray-200 hover:border-gray-300"
+                              : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                           }`}
                         >
-                          <div className="text-2xl mb-2">{dept.icon}</div>
-                          <div className="text-sm font-medium">{dept.label}</div>
+                          <div className="text-3xl mb-3">{dept.icon}</div>
+                          <div className="font-medium">{dept.label}</div>
                         </div>
                       </label>
                     ))}
                   </div>
+                  {errors.department && <p className="mt-2 text-sm text-red-600">{errors.department}</p>}
                 </div>
 
+                {/* Category Selection */}
+                {selectedDepartment && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-4">Select Category *</label>
+                    <div className="grid grid-cols-2 gap-4">
+                      {selectedDepartment.categories.map((category) => (
+                        <label key={category} className="cursor-pointer">
+                          <input
+                            type="radio"
+                            name="category"
+                            value={category}
+                            checked={formData.category === category}
+                            onChange={handleInputChange}
+                            className="sr-only"
+                          />
+                          <div
+                            className={`p-4 rounded-xl border-2 text-center transition-all ${
+                              formData.category === category
+                                ? "border-green-500 bg-green-50 text-green-700"
+                                : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+                            }`}
+                          >
+                            <div className="font-medium">{category}</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                    {errors.category && <p className="mt-2 text-sm text-red-600">{errors.category}</p>}
+                  </div>
+                )}
+
+                {/* Complaint Title */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    <FileText className="w-4 h-4 inline mr-2" />
-                    Complaint Title *
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">Complaint Title *</label>
                   <input
                     type="text"
                     name="title"
                     value={formData.title}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className={`w-full px-4 py-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-lg ${
+                      errors.title ? "border-red-300 bg-red-50" : "border-gray-300"
+                    }`}
                     placeholder="Brief, descriptive title of your complaint"
-                    required
                   />
+                  {errors.title && <p className="mt-2 text-sm text-red-600">{errors.title}</p>}
                 </div>
 
+                {/* Urgency Level */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Priority Level</label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {priorities.map((priority) => (
-                      <label key={priority.value} className="cursor-pointer">
+                  <label className="block text-sm font-semibold text-gray-700 mb-4">Urgency Level</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {urgencyLevels.map((level) => (
+                      <label key={level.value} className="cursor-pointer">
                         <input
                           type="radio"
-                          name="priority"
-                          value={priority.value}
-                          checked={formData.priority === priority.value}
+                          name="urgency"
+                          value={level.value}
+                          checked={formData.urgency === level.value}
                           onChange={handleInputChange}
                           className="sr-only"
                         />
                         <div
                           className={`p-4 rounded-xl border-2 text-center transition-all ${
-                            formData.priority === priority.value
-                              ? `border-${priority.color}-500 bg-${priority.color}-50 text-${priority.color}-700`
-                              : "border-gray-200 hover:border-gray-300"
+                            formData.urgency === level.value
+                              ? `${level.borderColor} ${level.bgColor} ${level.textColor}`
+                              : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
                           }`}
                         >
-                          <div className="font-medium">{priority.label}</div>
-                          <div className="text-xs text-gray-600 mt-1">{priority.description}</div>
+                          <div className="font-semibold">{level.label}</div>
+                          <div className="text-xs mt-1 opacity-75">{level.description}</div>
                         </div>
                       </label>
                     ))}
                   </div>
                 </div>
 
+                {/* Description */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Detailed Description *</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">Detailed Description *</label>
                   <textarea
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
                     rows={6}
-                    className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                    placeholder="Provide a detailed description of the issue, including when it started, how it affects you, and any other relevant information..."
-                    required
+                    className={`w-full px-4 py-4 border rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none text-lg ${
+                      errors.description ? "border-red-300 bg-red-50" : "border-gray-300"
+                    }`}
+                    placeholder="Provide a detailed description of the issue. Include when it started, how it affects you, location details, and any other relevant information..."
                   />
-                  <div className="text-sm text-gray-500 mt-2">
-                    {formData.description.length}/500 characters
+                  <div className="flex justify-between items-center mt-2">
+                    <div className="text-sm text-gray-500">{formData.description.length}/1000 characters</div>
+                    {errors.description && <p className="text-sm text-red-600">{errors.description}</p>}
                   </div>
                 </div>
-              </div>
-            )}
 
-            {/* Step 3: Evidence Upload */}
-            {currentStep === 3 && (
-              <div className="space-y-6">
-                <div className="text-center mb-6">
-                  <h2 className="text-2xl font-semibold text-gray-900 mb-2">Upload Evidence</h2>
-                  <p className="text-gray-600">Add photos or videos to support your complaint (optional but recommended)</p>
-                </div>
-
+                {/* Image Upload */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-4">
-                    <Camera className="w-4 h-4 inline mr-2" />
-                    Upload Photos/Videos (Optional)
-                  </label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-4">Supporting Images (Optional)</label>
                   <div
                     className={`border-2 border-dashed rounded-xl p-8 text-center transition-all ${
                       dragActive
-                        ? "border-blue-400 bg-blue-50"
-                        : "border-gray-300 hover:border-blue-400 hover:bg-blue-50"
+                        ? "border-purple-400 bg-purple-50"
+                        : "border-gray-300 hover:border-purple-400 hover:bg-purple-50"
                     }`}
                     onDragEnter={handleDrag}
                     onDragLeave={handleDrag}
@@ -413,89 +674,64 @@ export default function SubmitComplaint() {
                     <input
                       type="file"
                       multiple
-                      accept="image/*,video/*"
-                      onChange={handleFileUpload}
+                      accept="image/*"
+                      onChange={handleImageUpload}
                       className="hidden"
-                      id="file-upload"
+                      id="image-upload"
                     />
-                    <label htmlFor="file-upload" className="cursor-pointer">
-                      <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-lg font-medium text-gray-700 mb-2">
-                        Drop files here or click to upload
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        PNG, JPG, MP4 up to 10MB each • Maximum 5 files
-                      </p>
+                    <label htmlFor="image-upload" className="cursor-pointer">
+                      <ImageIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                      <p className="text-lg font-medium text-gray-700 mb-2">Drop images here or click to upload</p>
+                      <p className="text-sm text-gray-500 mb-4">PNG, JPG, JPEG up to 5MB each • Maximum 5 images</p>
+                      <div className="inline-flex items-center px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                        <Upload className="w-5 h-5 mr-2" />
+                        Choose Images
+                      </div>
                     </label>
                   </div>
 
-                  {/* File Preview */}
-                  {formData.files.length > 0 && (
+                  {/* Image Preview */}
+                  {formData.images.length > 0 && (
                     <div className="mt-6">
-                      <h4 className="font-medium text-gray-900 mb-4">Uploaded Files ({formData.files.length})</h4>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {formData.files.map((file, index) => (
-                          <div key={index} className="relative bg-gray-50 rounded-lg p-4 border">
-                            <div className="flex items-center space-x-3">
-                              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <Camera className="w-5 h-5 text-blue-600" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">{file.name}</p>
-                                <p className="text-xs text-gray-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                              </div>
+                      <h4 className="font-semibold text-gray-900 mb-4">Uploaded Images ({formData.images.length}/5)</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                        {formData.images.map((image, index) => (
+                          <div key={index} className="relative group">
+                            <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200">
+                              <img
+                                src={URL.createObjectURL(image) || "/placeholder.svg"}
+                                alt={`Upload ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
                             </div>
                             <button
                               type="button"
-                              onClick={() => removeFile(index)}
-                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
+                              onClick={() => removeImage(index)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
                             >
                               <X className="w-4 h-4" />
                             </button>
+                            <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-50 text-white text-xs p-2 rounded-b-lg">
+                              {image.name.length > 15 ? `${image.name.substring(0, 15)}...` : image.name}
+                            </div>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
-                </div>
 
-                <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-                  <div className="flex items-start">
-                    <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 mr-3" />
-                    <div>
-                      <h4 className="font-medium text-green-900">Ready to Submit</h4>
-                      <p className="text-sm text-green-700 mt-1">
-                        Review your complaint details and click submit. You'll receive a tracking ID immediately.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Summary */}
-                <div className="bg-gray-50 rounded-xl p-6">
-                  <h4 className="font-semibold text-gray-900 mb-4">Complaint Summary</h4>
-                  <div className="space-y-3 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Name:</span>
-                      <span className="font-medium">{formData.fullName}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Department:</span>
-                      <span className="font-medium">
-                        {departments.find(d => d.value === formData.department)?.label || 'Not selected'}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Priority:</span>
-                      <span className={`font-medium capitalize text-${
-                        priorities.find(p => p.value === formData.priority)?.color
-                      }-600`}>
-                        {formData.priority}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Files:</span>
-                      <span className="font-medium">{formData.files.length} attached</span>
+                  <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div className="flex items-start">
+                      <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 mr-3" />
+                      <div>
+                        <h4 className="font-medium text-blue-900">Image Guidelines</h4>
+                        <ul className="text-sm text-blue-700 mt-1 space-y-1">
+                          <li>• Take clear, well-lit photos of the issue</li>
+                          <li>• Include wide shots and close-up details</li>
+                          <li>• Only image files (PNG, JPG, JPEG) are accepted</li>
+                          <li>• Each image must be less than 5MB</li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -503,40 +739,35 @@ export default function SubmitComplaint() {
             )}
 
             {/* Navigation Buttons */}
-            <div className="flex justify-between pt-6 border-t">
-              {currentStep > 1 ? (
+            <div className="px-8 py-6 bg-gray-50 border-t flex justify-between items-center">
+              {currentStep === 1 ? (
+                <div></div>
+              ) : (
                 <button
                   type="button"
                   onClick={prevStep}
-                  className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors flex items-center"
+                  className="flex items-center px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-semibold"
                 >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Previous
+                  <ArrowLeft className="w-5 h-5 mr-2" />
+                  Previous Step
                 </button>
-              ) : (
-                <div></div>
               )}
 
-              {currentStep < 3 ? (
+              {currentStep === 1 ? (
                 <button
                   type="button"
                   onClick={nextStep}
-                  disabled={!isStepValid(currentStep)}
-                  className={`px-6 py-3 rounded-xl font-semibold transition-colors flex items-center ${
-                    isStepValid(currentStep)
-                      ? "bg-blue-600 text-white hover:bg-blue-700"
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  }`}
+                  className="flex items-center px-8 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors font-semibold text-lg"
                 >
                   Next Step
-                  <ArrowLeft className="w-4 h-4 ml-2 rotate-180" />
+                  <ArrowRight className="w-5 h-5 ml-2" />
                 </button>
               ) : (
                 <button
                   type="submit"
-                  className="px-8 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors flex items-center"
+                  className="flex items-center px-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors font-semibold text-lg"
                 >
-                  <CheckCircle className="w-5 h-5 mr-2" />
+                  <CheckCircle className="w-6 h-6 mr-2" />
                   Submit Complaint
                 </button>
               )}
@@ -555,7 +786,7 @@ export default function SubmitComplaint() {
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">Complaint Submitted Successfully!</h3>
               <p className="text-gray-600 mb-6">Your complaint has been registered and assigned a tracking ID.</p>
-              
+
               <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
                 <p className="text-sm text-blue-700 mb-2">Your Complaint ID:</p>
                 <p className="text-2xl font-bold text-blue-600 font-mono">{complaintId}</p>
@@ -580,8 +811,8 @@ export default function SubmitComplaint() {
                 >
                   Track Your Complaint
                 </Link>
-                <button 
-                  onClick={() => setShowModal(false)} 
+                <button
+                  onClick={() => setShowModal(false)}
                   className="block w-full text-gray-600 hover:text-gray-800 py-2 transition-colors"
                 >
                   Close

@@ -2,10 +2,10 @@
 import { useState } from "react"
 import Link from "next/link"
 import { User, Mail, Lock, Phone, MapPin, Eye, EyeOff, Shield, CheckCircle, ArrowRight } from "lucide-react"
-
+import toast from "react-hot-toast"
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
-    fullName: "",
+    name: "",
     email: "",
     phone: "",
     address: "",
@@ -36,8 +36,8 @@ export default function RegisterPage() {
   const validateForm = () => {
     const newErrors = {}
 
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = "Full name is required"
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required"
     }
 
     if (!formData.email.trim()) {
@@ -76,11 +76,36 @@ export default function RegisterPage() {
     setLoading(true)
 
     // Simulate registration process
+    //register api 
+    //http://localhost:5000/api/auth/register
+    //make a api call here to register the user
+
     setTimeout(() => {
-      console.log("Registration attempt:", formData)
+      console.log(formData);
+      fetch("https://civicnivaran.onrender.com/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok")
+          }
+          return response.json()
+        })
+        .then((data) => {
+          console.log("Registration successful:", data)
+          toast.success("Registration successful!");
+          // In real app, redirect to login or dashboard
+          window.location.href = "/login"
+        })
+        .catch((error) => {
+          console.error("There was a problem with the fetch operation:", error)
+          toast.error("Registration failed. Please try again.");
+        })
       setLoading(false)
-      // In real app, redirect to login or dashboard
-      window.location.href = "/login"
     }, 2000)
   }
 
@@ -88,7 +113,7 @@ export default function RegisterPage() {
     if (currentStep === 1) {
       // Validate first step
       const stepErrors = {}
-      if (!formData.fullName.trim()) stepErrors.fullName = "Full name is required"
+      if (!formData.name.trim()) stepErrors.name = "Name is required"
       if (!formData.email.trim()) stepErrors.email = "Email is required"
       else if (!/\S+@\S+\.\S+/.test(formData.email)) stepErrors.email = "Email is invalid"
       if (!formData.phone.trim()) stepErrors.phone = "Phone number is required"
@@ -201,7 +226,7 @@ export default function RegisterPage() {
                       <div className="grid grid-cols-3 gap-3">
                         {[
                           { value: "citizen", label: "Citizen" },
-                          { value: "admin", label: "Officer" },
+                          { value: "officer", label: "Officer" },
                           { value: "worker", label: "Worker" },
                         ].map((role) => (
                           <label key={role.value} className="cursor-pointer">
@@ -234,16 +259,16 @@ export default function RegisterPage() {
                         <User className="w-5 h-5 absolute left-4 top-4 text-gray-400" />
                         <input
                           type="text"
-                          name="fullName"
-                          value={formData.fullName}
+                          name="name"
+                          value={formData.name}
                           onChange={handleInputChange}
                           className={`w-full pl-12 pr-4 py-4 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
-                            errors.fullName ? "border-red-300" : "border-gray-300"
+                            errors.name ? "border-red-300" : "border-gray-300"
                           }`}
                           placeholder="Enter your full name"
                         />
                       </div>
-                      {errors.fullName && <p className="mt-2 text-sm text-red-600">{errors.fullName}</p>}
+                      {errors.name && <p className="mt-2 text-sm text-red-600">{errors.name}</p>}
                     </div>
 
                     {/* Email */}
@@ -266,6 +291,7 @@ export default function RegisterPage() {
                     </div>
 
                     {/* Phone */}
+                    {/* only 10 digits are allowed so change for that */}
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">Phone Number *</label>
                       <div className="relative">
@@ -274,6 +300,11 @@ export default function RegisterPage() {
                           type="tel"
                           name="phone"
                           value={formData.phone}
+                          // Allow only numbers and max 10 digits
+                          pattern="[0-9]{10}"
+                          onInput={(e) => {
+                            e.target.value = e.target.value.replace(/[^0-9]/g, "").slice(0, 10)
+                          }}
                           onChange={handleInputChange}
                           className={`w-full pl-12 pr-4 py-4 border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${
                             errors.phone ? "border-red-300" : "border-gray-300"

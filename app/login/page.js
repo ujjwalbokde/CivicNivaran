@@ -2,16 +2,18 @@
 import { useState } from "react"
 import Link from "next/link"
 import { User, Lock, Eye, EyeOff, Shield, CheckCircle } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import toast from 'react-hot-toast'
 
 export default function LoginPage() {
+  const router = useRouter()
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    role: "citizen",
   })
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-
+  
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
@@ -26,15 +28,44 @@ export default function LoginPage() {
     // Simulate login process
     setTimeout(() => {
       console.log("Login attempt:", formData)
+    //http://localhost:5000/api/auth/login
+      // Make API call to login user
+        fetch(`https://civicnivaran.onrender.com/api/auth/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(formData),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error("Network response was not ok")
+            }
+            return response.json()
+          })
+        .then((data) => {
+          console.log("Login successful:", data)
+          toast.success("Login successful!");
+          // Store token in localStorage
+          localStorage.setItem("token", data.token)
+          // Redirect to login page
+          let userRole = data.user.role ;
+          if (userRole === "citizen") {
+            router.push("/")
+          } else if (userRole === "officer") {
+            router.push("/admin")
+          }
+           else if (userRole === "worker") {
+            router.push("/worker")
+          } else {
+            console.error("Unknown user role:", userRole)
+          }
+        })
+        .catch((error) => {
+          console.error("There was a problem with the fetch operation:", error)
+          toast.error("Login failed. Please try again.")
+        })
       setLoading(false)
-      // In real app, redirect based on role
-      if (formData.role === "admin") {
-        window.location.href = "/admin"
-      } else if (formData.role === "worker") {
-        window.location.href = "/worker"
-      } else {
-        window.location.href = "/"
-      }
     }, 1500)
   }
 
@@ -106,7 +137,7 @@ export default function LoginPage() {
               {/* Login Form */}
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Role Selection */}
-                <div>
+                {/* <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-3">Login as</label>
                   <div className="grid grid-cols-3 gap-3">
                     {[
@@ -133,7 +164,7 @@ export default function LoginPage() {
                       </label>
                     ))}
                   </div>
-                </div>
+                </div> */}
 
                 {/* Email */}
                 <div>

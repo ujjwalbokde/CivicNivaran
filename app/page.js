@@ -1,52 +1,14 @@
+"use client"
 import Link from "next/link"
 import { CheckCircle, FileText, Bell, Shield, Users, Clock, Award, Star, ArrowRight, Phone, Mail, MapPin } from 'lucide-react'
-
+import { useState, useEffect } from 'react'
+import Navbar from "@/components/Navbar"
 export default function HomePage() {
+  //Check if the user is authenticated and hide login btn
+  
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="bg-white shadow-lg sticky top-0 z-50 border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <div className="flex-shrink-0 flex items-center">
-                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center mr-3">
-                  <Shield className="w-6 h-6 text-white" />
-                </div>
-                <h1 className="text-2xl font-bold text-blue-600">CivicNivaran</h1>
-              </div>
-            </div>
-            
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
-              <Link href="/" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Home
-              </Link>
-              <Link href="/track" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Track Complaint
-              </Link>
-              <Link href="/admin" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Dashboard
-              </Link>
-              <Link href="/feedback" className="text-gray-700 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                Feedback
-              </Link>
-              <Link href="/login" className="bg-blue-600 text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">
-                Login
-              </Link>
-            </div>
-
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <button className="text-gray-700 hover:text-blue-600 p-2">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* Hero Section */}
       <section className="relative bg-gradient-to-br from-blue-50 via-white to-green-50 py-20 lg:py-32">
@@ -102,13 +64,11 @@ export default function HomePage() {
             <div className="relative">
               <div className="bg-white rounded-2xl shadow-2xl p-8 border">
                 <img 
-                  src="/placeholder.svg?height=400&width=500" 
+                  src="/india.png" 
                   alt="CivicNivaran Dashboard Preview" 
                   className="w-full h-auto rounded-lg"
                 />
-                <div className="absolute -top-4 -right-4 bg-green-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
-                  Live Demo
-                </div>
+                
               </div>
               
               {/* Floating cards */}
@@ -179,13 +139,7 @@ export default function HomePage() {
               <p className="text-gray-600 mb-6">
                 Submit your complaint with photos, videos, and detailed information. Our smart form guides you through the process.
               </p>
-              <div className="bg-white rounded-lg p-4 shadow-sm border">
-                <img 
-                  src="/placeholder.svg?height=200&width=300" 
-                  alt="Submit complaint form" 
-                  className="w-full h-32 object-cover rounded"
-                />
-              </div>
+              
             </div>
             
             <div className="text-center group">
@@ -202,13 +156,7 @@ export default function HomePage() {
               <p className="text-gray-600 mb-6">
                 Get real-time updates via SMS, email, and app notifications. Know exactly who's working on your issue.
               </p>
-              <div className="bg-white rounded-lg p-4 shadow-sm border">
-                <img 
-                  src="/placeholder.svg?height=200&width=300" 
-                  alt="Progress tracking interface" 
-                  className="w-full h-32 object-cover rounded"
-                />
-              </div>
+              
             </div>
             
             <div className="text-center group">
@@ -224,13 +172,7 @@ export default function HomePage() {
               <p className="text-gray-600 mb-6">
                 Receive confirmation when your issue is resolved. Rate the service and help us improve for everyone.
               </p>
-              <div className="bg-white rounded-lg p-4 shadow-sm border">
-                <img 
-                  src="/placeholder.svg?height=200&width=300" 
-                  alt="Resolution confirmation" 
-                  className="w-full h-32 object-cover rounded"
-                />
-              </div>
+             
             </div>
           </div>
         </div>
