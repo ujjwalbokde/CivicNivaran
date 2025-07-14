@@ -9,9 +9,14 @@ export default function ProfilePage() {
   const [userData, setUserData] = useState(null)
 const [editData, setEditData] = useState({})
 const [loading, setLoading] = useState(true)
-const token = localStorage.getItem('token');
 const [isLogin, setIsLogin] = useState(false)
 const [isAdmin, setIsAdmin] = useState(false)
+const [token, setToken] = useState(null)
+ useEffect(() => {
+    const localToken = localStorage.getItem("token")
+    setToken(localToken)
+  }, [])
+
  useEffect(() => {
     // Simulate fetching user data
     const fetchUser = async () => {
